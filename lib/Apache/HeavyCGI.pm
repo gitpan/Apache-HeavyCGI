@@ -5,7 +5,7 @@ use Apache::HeavyCGI::Date;
 use Apache::HeavyCGI::Exception;
 use strict;
 use vars qw(%FIELDS $VERSION $Exeplan_warned $DEBUG);
-$VERSION = sprintf "0.0%d%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "0.0%d%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
 
 use fields qw[
 
@@ -174,10 +174,10 @@ sub layout {
   my Apache::HeavyCGI $self = shift;
   require Apache::HeavyCGI::Layout;
   my @l;
-  push @l, qq{<HTML><HEAD><TITLE>Apache::HeavyCGI default page</TITLE>
-</HEAD><BODY><PRE>};
+  push @l, qq{<html><head><title>Apache::HeavyCGI default page</title>
+</head><body><pre>};
   push @l, $self->instance_of("Apache::HeavyCGI::Debug");
-  push @l, qq{</PRE></BODY></HTML>};
+  push @l, qq{</pre></body></html>};
   Apache::HeavyCGI::Layout->new(@l);
 }
 

@@ -1,3 +1,14 @@
+2001-02-08  Andreas J. Koenig  <andreas.koenig@anima.de>
+
+	* lib/Apache/HeavyCGI.pm: we now have all form widgets coded as in
+	CGI.pm. The reason why we do that is: CGI.pm is slow but we like
+	the interfce it provides.
+
+	* Apache::HeavyCGI::Date now without 'use fields'. It has been
+	observed that use fields can cause core dumps under up to now
+	unknown conditions. Maybe it's due to the combination of overload
+	and fields pragma? I don't know, but I need to be cautious:-(
+
 1999-11-25  Andreas J. Koenig  <andreas.koenig@anima.de>
 
 	* Improvements on Exeplan: DEBUG and FUNCTIONAL as instance

@@ -1,19 +1,17 @@
 package Apache::HeavyCGI::Date;
 use 5.005;
 use strict;
-use fields qw(http unix);
 
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%03d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 use HTTP::Date ();
 use overload '""' => "http";
 
 sub new {
   my($class,%arg) = @_;
-  no strict "refs";
   $arg{unix} = time unless %arg;
-  my Apache::HeavyCGI::Date $self = bless [\%{"$class\::FIELDS"}], $class;
+  my $self = bless {}, $class;
   while (my($k,$v) = each %arg) {
     $self->{$k} = $v;
   }
@@ -21,7 +19,7 @@ sub new {
 }
 
 sub unix {
-  my Apache::HeavyCGI::Date $self = shift;
+  my $self = shift;
   my($set) = @_;
   if (defined $set) {
     $self->{unix} = $set;
@@ -32,7 +30,7 @@ sub unix {
 }
 
 sub http {
-  my Apache::HeavyCGI::Date $self = shift;
+  my $self = shift;
   my($set) = @_;
   if (defined $set) {
     $self->{http} = $set;
