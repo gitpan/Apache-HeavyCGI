@@ -1,0 +1,47 @@
+What this example does
+----------------------
+
+This example is quite well suited as a template. It generates an
+application with basic user authentication with a single simple table
+layout:
+
+    +------+------+
+    |      |      |
+    | LAY  | out  |
+    |      |      |
+    +------+------+
+    | Hello| Hello|
+    | user,| world|
+    |      |      |
+    +------+------+
+
+It's really just a Hello world program. If I were you, I'd find it
+intimidating, that a Hello world program can need over 100 lines of
+code in 5 files. But believe me, I do know that the productivity of
+HeavyCGI starts well beyond Hello World programs, and I really do use
+this template whenever I start programming on a new application.
+
+Howto install
+-------------
+
+Put all files into any directory that your Apache can see and add to
+your httpd.conf something along these lines:
+
+<PERL>
+
+use lib "/your/path/to/Apache-HeavyCGI/eg";
+my $loc = "/heavycgi_demo";
+$Location{$loc}{SetHandler} = "perl-script";
+$Location{$loc}{PerlHandler} = "heavy_template::config";
+$Location{$loc}{PerlAuthenHandler} = "heavy_template::fake_authen_user";
+$Location{$loc}{AuthName} = "Login_with_any_name";
+$Location{$loc}{AuthType} = "Basic";
+$Location{$loc}{require} = "valid-user";
+
+</PERL>
+
+Then you can access the demo with http://your.webserver/heavycgi_demo
+
+
+Enjoy,
+andreas koenig
