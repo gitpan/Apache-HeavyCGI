@@ -5,7 +5,8 @@ use Apache::HeavyCGI::Date;
 use Apache::HeavyCGI::Exception;
 use strict;
 use vars qw(%FIELDS $VERSION $DEBUG);
-$VERSION = sprintf "0.%02d%02d", q$Revision: 1.32 $ =~ /(\d+)\.(\d+)/;
+
+$VERSION = sprintf "0.%02d%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
 
 use fields qw[
 

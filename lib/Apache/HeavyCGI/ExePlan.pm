@@ -4,7 +4,7 @@ use strict;
 use fields qw(PLAN DEBUG FUNCTIONAL WATCHVARIABLE);
 
 use vars '%FIELDS', '$VERSION';
-$VERSION = sprintf "%d.%03d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 
 # no singleton, every Application can have its own execution plan even
 # every object can have it's own, although, it probably doesn't pay
@@ -53,7 +53,9 @@ sub walk {
                  $self->{PLAN}[$i]."::".$self->{PLAN}[$i+1],
                  $self->{FUNCTIONAL} ? "f" : "m",
                 ) if $self->{DEBUG} && $self->{DEBUG} & 1;
-    my $before = Data::Dumper::Dumper($application->{$self->{WATCHVARIABLE}});
+    my $before = $self->{WATCHVARIABLE} ?
+        Data::Dumper::Dumper($application->{$self->{WATCHVARIABLE}}) :
+              "";
     if ($self->{FUNCTIONAL}) {
       my $subr = $self->{PLAN}[$i] or last;
       my $obj = $self->{PLAN}[$i+1];
@@ -64,7 +66,8 @@ sub walk {
       $obj->$method($application);
     }
     warn sprintf "exiting" if $self->{DEBUG} && $self->{DEBUG} & 2;
-    my $after = Data::Dumper::Dumper($application->{$self->{WATCHVARIABLE}});
+    my $after = $self->{WATCHVARIABLE} ?
+        Data::Dumper::Dumper($application->{$self->{WATCHVARIABLE}}) : "";
     unless ($before eq $after) {
       warn sprintf(
                    "variable %s changed value from[%s]to[%s] in method[%s]",
