@@ -4,8 +4,8 @@ use Apache::Constants qw(:common);
 use Apache::HeavyCGI::Date;
 use Apache::HeavyCGI::Exception;
 use strict;
-use vars qw(%FIELDS $VERSION $Exeplan_warned);
-$VERSION = sprintf "0.0%d%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+use vars qw(%FIELDS $VERSION $Exeplan_warned $DEBUG);
+$VERSION = sprintf "0.0%d%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
 
 use fields qw[
 
@@ -36,7 +36,7 @@ TODAY
 sub can_gzip {
   my Apache::HeavyCGI $self = shift;
   return $self->{CAN_GZIP} if defined $self->{CAN_GZIP};
-  my $acce = $self->{R}->header_in('Accept-Encoding');
+  my $acce = $self->{R}->header_in('Accept-Encoding') || "";
   return $self->{CAN_GZIP} = 0 unless $acce;
   $self->{CAN_GZIP} = $acce =~ /\bgzip\b/;
 }
@@ -44,7 +44,7 @@ sub can_gzip {
 sub can_png {
   my Apache::HeavyCGI $self = shift;
   return $self->{CAN_PNG} if defined $self->{CAN_PNG};
-  my $acce = $self->{R}->header_in("Accept");
+  my $acce = $self->{R}->header_in("Accept") || "";
   return $self->{CAN_PNG} = 0 unless $acce;
   $self->{CAN_PNG} = $acce =~ m|image/png|i;
 }
@@ -62,7 +62,7 @@ sub can_utf8 {
   ##   an error response with the 406 (not acceptable) status code, though
   ##   the sending of an unacceptable response is also allowed.
 
-  my $acce = $self->{R}->header_in("Accept-Charset");
+  my $acce = $self->{R}->header_in("Accept-Charset") || "";
   if (defined $acce){
     if ($acce =~ m|\butf-8\b|i){
       $self->{CAN_UTF8} = 1;
@@ -84,7 +84,8 @@ sub deliver {
   return OK if $r->method eq "HEAD";
   # warn "Going to print content";
   $r->print($self->{CONTENT});
-  DONE; # we've sent the headers and the body, apache shouldn't talk to the browser anymore
+  DONE; # we've sent the headers and the body, apache shouldn't talk
+        # to the browser anymore
 }
 
 sub handler {
@@ -160,6 +161,7 @@ sub init {
 
 sub instance_of {
   my($self,$class) = @_;
+  return $class->instance if $class->can("instance");
   my $requirefile = $class;
   $requirefile =~ s/::/\//g;
   $requirefile .= ".pm";
@@ -282,7 +284,242 @@ sub today {
   $self->{TODAY} = sprintf "%04d-%02d-%02d", @time[5,4,3];
 }
 
+# CGI form handling
 
+sub checkbox {
+  my($self,%arg) = @_;
+
+  my $name = $arg{name};
+  my $value;
+  defined($value = $arg{value}) or ($value = "on");
+  my $checked;
+  my @sel = $self->{CGI}->param($name);
+  if (@sel) {
+    for my $s (@sel) {
+      if ($s eq $value) {
+	$checked = 1;
+	last;
+      }
+    }
+  } else {
+    $checked = $arg{checked};
+  }
+  sprintf(qq{<input type="checkbox" name="%s" value="%s"%s />},
+	  $self->escapeHTML($name),
+	  $self->escapeHTML($value),
+	  $checked ? qq{ checked="checked"} : ""
+	 );
+}
+
+# pause_1999::main
+sub checkbox_group {
+  my($self,%arg) = @_;
+
+  my $name = $arg{name};
+  my @sel = $self->{CGI}->param($name);
+  unless (@sel) {
+    if (exists $arg{default}) {
+      my $default = $arg{default};
+      @sel = ref $default ? @$default : $default;
+    }
+  }
+
+  my %sel;
+  @sel{@sel} = ();
+  my @m;
+
+  $name = $self->escapeHTML($name);
+
+  my $haslabels = exists $arg{labels};
+  my $linebreak = $arg{linebreak} ? "<br />" : "";
+
+  for my $v (@{$arg{values} || []}) {
+    push(@m,
+	 sprintf(
+		 qq{<input type="checkbox" name="%s" value="%s"%s />%s%s},
+		 $name,
+		 $self->escapeHTML($v),
+		 exists $sel{$v} ? qq{ checked="checked"} : "",
+		 $haslabels ? $arg{labels}{$v} : $self->escapeHTML($v),
+		 $linebreak,
+		)
+	);
+  }
+  join "", @m;
+}
+
+sub escapeHTML {
+  my($self, $what) = @_;
+  return unless defined $what;
+  my %escapes = qw(& &amp; " &quot; > &gt; < &lt;);
+  $what =~ s[ ([&"<>]) ][$escapes{$1}]xg; # ]] cperl-mode comment
+  $what;
+}
+
+sub file_field {
+  my($self) = shift;
+  $self->text_pw_field(FIELDTYPE=>"file", @_);
+}
+
+sub hidden_field {
+  my($self) = shift;
+  $self->text_pw_field(FIELDTYPE=>"hidden", @_);
+}
+
+sub password_field {
+  my($self) = shift;
+  $self->text_pw_field(FIELDTYPE=>"password", @_);
+}
+
+# pause_1999::main
+sub radio_group {
+  my($self,%arg) = @_;
+  my $name = $arg{name};
+  my $value;
+  my $checked;
+  my $sel = $self->{CGI}->param($name);
+  my $haslabels = exists $arg{labels};
+  my $values = $arg{values} or Carp::croak "radio_group called without values";
+  defined($checked = $arg{checked})
+      or defined($checked = $sel)
+	  or defined($checked = $arg{default})
+	      or $checked = "";
+  # some people like to check the first item anyway:
+  #	  or ($checked = $values->[0]);
+  my $escname=$self->escapeHTML($name);
+  my $linebreak = $arg{linebreak} ? "<br />" : "";
+  my @m;
+  for my $v (@$values) {
+    my $escv = $self->escapeHTML($v);
+    if ($DEBUG) {
+      warn "escname undef" unless defined $escname;
+      warn "escv undef" unless defined $escv;
+      warn "v undef" unless defined $v;
+      warn "\$arg{labels}{\$v} undef" unless defined $arg{labels}{$v};
+      warn "checked undef" unless defined $checked;
+      warn "haslabels undef" unless defined $haslabels;
+      warn "linebreak undef" unless defined $linebreak;
+    }
+    push(@m,
+	 sprintf(
+		 qq{<input type="radio" name="%s" value="%s"%s />%s%s},
+		 $escname,
+		 $escv,
+		 $v eq $checked ? qq{ checked="checked"} : "",
+		 $haslabels ? $arg{labels}{$v} : $escv,
+		 $linebreak,
+		));
+  }
+  join "", @m;
+}
+
+# pause_1999::main
+sub scrolling_list {
+  my($self, %arg) = @_;
+  # name values size labels
+  my $size = $arg{size} ? qq{ size="$arg{size}"} : "";
+  my $multiple = $arg{multiple} ? q{ multiple="multiple"} : "";
+  my $haslabels = exists $arg{labels};
+  my $name = $arg{name};
+  my @sel = $self->{CGI}->param($name);
+  if (!@sel && exists $arg{default} && defined $arg{default}) {
+    my $d = $arg{default};
+    @sel = ref $d ? @$d : $d;
+  }
+  my %sel;
+  @sel{@sel} = ();
+  my @m;
+  push @m, sprintf qq{<select name="%s"%s%s>}, $name, $size, $multiple;
+  $arg{values} = [$arg{value}] unless exists $arg{values};
+  for my $v (@{$arg{values} || []}) {
+    my $escv = $self->escapeHTML($v);
+    push @m, sprintf qq{<option%s value="%s">%s</option>\n},
+	exists $sel{$v} ? q{ selected="selected"} : "",
+	    $escv,
+		$haslabels ? $self->escapeHTML($arg{labels}{$v}) : $escv;
+  }
+  push @m, "</select>";
+  join "", @m;
+}
+
+# pause_1999::main
+sub submit {
+  my($self,%arg) = @_;
+  my $name = $arg{name} || "";
+  my $val  = $arg{value} || $name;
+  sprintf qq{<input type="submit" name="%s" value="%s" />},
+      $self->escapeHTML($name),
+	  $self->escapeHTML($val);
+}
+
+# pause_1999::main
+sub textarea {
+  my($self,%arg) = @_;
+  my $req = $self->{CGI};
+  my $name = $arg{name} || "";
+  my $val  = $req->param($name) || $arg{default} || $arg{value} || "";
+  my($r)   = exists $arg{rows} ? qq{ rows="$arg{rows}"} : '';
+  my($c)   = exists $arg{cols} ? qq{ cols="$arg{cols}"} : '';
+  my($wrap)= exists $arg{wrap} ? qq{ wrap="$arg{wrap}"} : '';
+  sprintf qq{<textarea name="%s"%s%s%s>%s</textarea>},
+      $self->escapeHTML($name),
+	  $r, $c, $wrap, $self->escapeHTML($val);
+}
+
+# pause_1999::main
+sub textfield {
+  my($self) = shift;
+  $self->text_pw_field(FIELDTYPE=>"text", @_);
+}
+
+sub text_pw_field {
+  my($self, %arg) = @_;
+  my $name = $arg{name} || "";
+  my $fieldtype = $arg{FIELDTYPE};
+
+  my $req = $self->{CGI};
+  my $val;
+  if ($fieldtype eq "FILE") {
+    if ($req->can("upload")) {
+      if ($req->upload($name)) {
+	$val = $req->upload($name);
+      } else {
+	$val = $req->param($name);
+      }
+    } else {
+      $val = $req->param($name);
+    }
+  } else {
+    $val = $req->param($name);
+  }
+  defined $val or
+      defined($val = $arg{value}) or
+	  defined($val = $arg{default}) or
+	      ($val = "");
+
+  sprintf qq{<input type="$fieldtype"
+ name="%s" value="%s"%s%s />},
+      $self->escapeHTML($name),
+	   $self->escapeHTML($val),
+	       exists $arg{size} ? " size=\"$arg{size}\"" : "",
+		   exists $arg{maxlength} ? " maxlength=\"$arg{maxlength}\"" : "";
+}
+
+sub uri_escape {
+  my Apache::HeavyCGI $self = shift;
+  my $string = shift;
+  return "" unless defined $string;
+  require URI::Escape;
+  my $s = URI::Escape::uri_escape($string, '^\w ');
+  $s =~ s/ /+/g;
+  $s;
+}
+
+sub uri_escape_light {
+  my Apache::HeavyCGI $self = shift;
+  require URI::Escape;
+  URI::Escape::uri_escape(shift,q{<>#%"; \/\?:&=+,\$}); #"
+}
 
 1;
 
@@ -664,12 +901,16 @@ Unused.
 
 =item TIME
 
-The time when this request started set by the time() method.
+The time when this request started set by the time() method. Please
+note, that the time() system call is considerable faster than the
+method call to Apache::HeavyCGI::time. The advantage of calling using
+the TIME attribute is that it is self-consistent (remains the same
+during a request).
 
 =item TODAY
 
-Today's date in the format 9999-99-99 set by the today() method.
-
+Today's date in the format 9999-99-99 set by the today() method, based
+on the time() method.
 
 =back
 
@@ -682,7 +923,9 @@ day. The server I have developed it for is a double processor machine
 with 233 MHz, and each request is handled by about 30 different
 handlers: a few trigonometric, database, formatting, and recoding
 routines. With this overhead each request takes about a tenth of a
-second which in many environments will be regarded as slow.
+second which in many environments will be regarded as slow. On the
+other hand, the server is well respected for its excellent response
+times. YMMV.
 
 =head1 BUGS
 
