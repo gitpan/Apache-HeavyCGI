@@ -1,3 +1,13 @@
+1999-10-17  Andreas J. Koenig  <andreas.koenig@anima.de>
+
+	* Fixed an uninitialized warning in SquidRemoteAddr and
+	HeavyCGI.pm
+
+1999-10-12  Andreas J. Koenig  <andreas.koenig@anima.de>
+
+	* $@ was checked for isa, but isa() was a method call instead of
+	an UNIVERSAL::isa function call.
+
 1999-08-16  Andreas J. Koenig  <andreas.koenig@anima.de>
 
 	* ExePlan now executes the plan as a series of function calls

@@ -5,7 +5,7 @@ use Apache::HeavyCGI::Date;
 use Apache::HeavyCGI::Exception;
 use strict;
 use vars qw(%FIELDS $VERSION $Exeplan_warned);
-$VERSION = sprintf "0.0%d%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "0.0%d%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
 
 use fields qw[
 
@@ -36,13 +36,17 @@ TODAY
 sub can_gzip {
   my Apache::HeavyCGI $self = shift;
   return $self->{CAN_GZIP} if defined $self->{CAN_GZIP};
-  $self->{CAN_GZIP} = $self->{R}->header_in('Accept-Encoding') =~ /\bgzip\b/;
+  my $acce = $self->{R}->header_in('Accept-Encoding');
+  return $self->{CAN_GZIP} = 0 unless $acce;
+  $self->{CAN_GZIP} = $acce =~ /\bgzip\b/;
 }
 
 sub can_png {
   my Apache::HeavyCGI $self = shift;
   return $self->{CAN_PNG} if defined $self->{CAN_PNG};
-  $self->{CAN_PNG} ||= $self->{R}->header_in("Accept") =~ m|image/png|i;
+  my $acce = $self->{R}->header_in("Accept");
+  return $self->{CAN_PNG} = 0 unless $acce;
+  $self->{CAN_PNG} = $acce =~ m|image/png|i;
 }
 
 sub can_utf8 {
@@ -58,8 +62,9 @@ sub can_utf8 {
   ##   an error response with the 406 (not acceptable) status code, though
   ##   the sending of an unacceptable response is also allowed.
 
-  if (defined $self->{R}->header_in("Accept-Charset")){
-    if ($self->{R}->header_in("Accept-Charset") =~ m|\butf-8\b|i){
+  my $acce = $self->{R}->header_in("Accept-Charset");
+  if (defined $acce){
+    if ($acce =~ m|\butf-8\b|i){
       $self->{CAN_UTF8} = 1;
     } else {
       $self->{CAN_UTF8} = 0;
@@ -92,7 +97,7 @@ sub dispatch {
   $self->init;
   eval { $self->prepare; };
   if ($@) {
-    if ($@->isa("Apache::HeavyCGI::Exception")) {
+    if (UNIVERSAL::isa($@,"Apache::HeavyCGI::Exception")) {
       if ($@->{ERROR}) {
 	warn "\$\@ ERROR[$@->{ERROR}]";
 	$@->{ERROR} = [ $@->{ERROR} ] unless ref $@->{ERROR};

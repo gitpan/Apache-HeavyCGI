@@ -3,18 +3,18 @@ use Apache::Constants qw(:common);
 use constant SRA_DEBUG => 0;
 use strict;
 use vars qw($VERSION $NoHeader_warned);
-$VERSION = sprintf "%d.%03d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 
 sub handler {
   my $r = shift;
 
-  if (my($ip) = $r->header_in('X-Forwarded-For') =~ /([^,\s]+)$/) {
+  my $xff = $r->header_in('X-Forwarded-For')||"";
+  if (my($ip) = $xff =~ /([^,\s]+)$/) {
     $r->connection->remote_ip($ip);
   } else {
-    warn sprintf "No IP in X-Forwarded-For[%s]",
-	$r->header_in('X-Forwarded-For')
-	    unless $NoHeader_warned++;
+    warn sprintf "No IP in X-Forwarded-For[%s]", $xff
+	unless $NoHeader_warned++;
   }
   warn sprintf "HERE Headers[%s]", join " ", $r->headers_in if SRA_DEBUG;
 
