@@ -1,0 +1,10 @@
+1999-08-16  Andreas J. Koenig  <andreas.koenig@anima.de>
+
+	* ExePlan now executes the plan as a series of function calls
+	instead of method calls. Only a little bit benchmarked and seems
+	to be a little bit better. Can be switched back to method calls by
+	manually setting FUNCTIONAL to false
+
+	* can_utf8 now reflects the protocol. HTTP/1.1 allows UTF-8 unless
+	they have an Accept-Encoding header
+

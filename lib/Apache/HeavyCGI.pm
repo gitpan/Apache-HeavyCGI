@@ -5,7 +5,7 @@ use Apache::HeavyCGI::Date;
 use Apache::HeavyCGI::Exception;
 use strict;
 use vars qw(%FIELDS $VERSION $Exeplan_warned);
-$VERSION = sprintf "0.0%d%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "0.0%d%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 
 use fields qw[
 
@@ -48,7 +48,27 @@ sub can_png {
 sub can_utf8 {
   my Apache::HeavyCGI $self = shift;
   return $self->{CAN_UTF8} if defined $self->{CAN_UTF8};
-  $self->{CAN_UTF8} ||= $self->{R}->header_in("Accept-Charset") =~ m|\butf-8\b|i;
+
+  # From chapter 14.2. HTTP/1.1
+
+  ##   If no Accept-Charset header is present, the default is that any
+  ##   character set is acceptable. If an Accept-Charset header is present,
+  ##   and if the server cannot send a response which is acceptable
+  ##   according to the Accept-Charset header, then the server SHOULD send
+  ##   an error response with the 406 (not acceptable) status code, though
+  ##   the sending of an unacceptable response is also allowed.
+
+  if (defined $self->{R}->header_in("Accept-Charset")){
+    if ($self->{R}->header_in("Accept-Charset") =~ m|\butf-8\b|i){
+      $self->{CAN_UTF8} = 1;
+    } else {
+      $self->{CAN_UTF8} = 0;
+    }
+    return $self->{CAN_UTF8};
+  }
+  my $protocol = $self->{R}->protocol || "";
+  my($major,$minor) = $protocol =~ m|HTTP/(\d+)\.(\d+)|;
+  $self->{CAN_UTF8} = $major >= 1 && $minor >= 1;
 }
 
 sub deliver {
@@ -670,7 +690,10 @@ class.
 
 =head1 AUTHOR
 
-Andreas Koenig <andreas.koenig@anima.de>
+Andreas Koenig <andreas.koenig@anima.de>. Thanks to Jochen Wiedmann
+for heavy debates about the code and crucial performance enhancement
+suggestions. The development of this code was sponsered by
+www.speed-link.de.
 
 =cut
 

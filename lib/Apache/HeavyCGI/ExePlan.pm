@@ -2,7 +2,11 @@ package Apache::HeavyCGI::ExePlan;
 use Apache::HeavyCGI; # want only the instance_of method
 use strict;
 use fields qw(PLAN);
-use vars qw(%FIELDS);
+use constant FUNCTIONAL => 1; # If true, makes the method calls
+                              # subroutine calls. Seems to be slightly
+                              # faster.
+use vars '%FIELDS', '$VERSION';
+$VERSION = sprintf "%d.%03d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 # no singleton, every Application can have its own execution plan even
 # every object can have it's own, although, it probably doesn't pay
@@ -14,13 +18,17 @@ sub new {
   my @plan;
   for my $method (@$methods) {
     for my $class (@$classes) {
-      my $obj;
+      my($obj,$subr);
       eval { $obj = $class->instance; };
       if ($@) {
 	$obj = Apache::HeavyCGI->instance_of($class);
       }
-      next unless $obj->can($method);
-      push @plan, $obj, $method;
+      next unless $subr = $obj->can($method);
+      if (FUNCTIONAL) {
+	push @plan, $subr, $obj;
+      } else {
+	push @plan, $obj, $method;
+      }
     }
   }
   no strict "refs";
@@ -33,9 +41,15 @@ sub walk {
   my Apache::HeavyCGI::ExePlan $self = shift;
   my Apache::HeavyCGI $application = shift;
   for (my $i=0;;$i+=2) {
-    my $obj = $self->{PLAN}[$i] or last;
-    my $method = $self->{PLAN}[$i+1];
-    $obj->$method($application);
+    if (FUNCTIONAL) {
+      my $subr = $self->{PLAN}[$i] or last;
+      my $obj = $self->{PLAN}[$i+1];
+      $subr->($obj,$application);
+    } else {
+      my $obj = $self->{PLAN}[$i] or last;
+      my $method = $self->{PLAN}[$i+1];
+      $obj->$method($application);
+    }
   }
 }
 
@@ -72,7 +86,7 @@ application object as the first argument.
 Normally, every application has its own execution plan. If the
 execution plan is calculated at load time of the application class,
 all objects of this class can share a common execution plan, thus
-speeding up the requests. Thus it is recommended to have an
+speeding up the requests. Consequently it is recommended to have an
 initialization in all applications that instantiates an execution plan
 and passes it to all application objects in the constructor.
 
