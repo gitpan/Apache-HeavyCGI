@@ -140,7 +140,7 @@ DESCRIPTION
     object passed as the second parameter.
 
     There are no fixed rules as to what has to happen within the "header"
-    and "parameter" method. As a rule of thumb it isf recommended to
+    and "parameter" method. As a rule of thumb it is recommended to
     determine and set the object attributes LAST_MODIFIED and EXPIRES (see
     below) within the header() method. It is also recommended to inject the
     the Apache::HeavyCGI::IfModified manpage module as the last header

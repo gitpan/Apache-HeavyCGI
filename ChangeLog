@@ -1,3 +1,12 @@
+2001-03-22  Andreas J. Koenig  <andreas.koenig@anima.de>
+
+	* Execution plan is now mandatory. A call to prepare will die if
+	there is no execution plan in the Apache::HeavyCGI object.
+
+	* Execution plan now cleaner and more useful than ever before:
+	DEBUG and WATCHVARIABLE can be set for debugging and WALKTYPE can
+	be set for avoiding method call overhead.
+
 2001-02-08  Andreas J. Koenig  <andreas.koenig@anima.de>
 
 	* lib/Apache/HeavyCGI.pm: we now have all form widgets coded as in

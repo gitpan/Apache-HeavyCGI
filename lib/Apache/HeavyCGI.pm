@@ -4,8 +4,8 @@ use Apache::Constants qw(:common);
 use Apache::HeavyCGI::Date;
 use Apache::HeavyCGI::Exception;
 use strict;
-use vars qw(%FIELDS $VERSION $Exeplan_warned $DEBUG);
-$VERSION = sprintf "0.0%d%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
+use vars qw(%FIELDS $VERSION $DEBUG);
+$VERSION = sprintf "0.%02d%02d", q$Revision: 1.32 $ =~ /(\d+)\.(\d+)/;
 
 use fields qw[
 
@@ -235,20 +235,7 @@ sub prepare {
   if (my $ep = $self->{EXECUTION_PLAN}) {
     $ep->walk($self);
   } else {
-    # we repeat the work that an executionplan does only once (as version
-    # prior 1.007 did
-    warn "No execution plan?" unless $Exeplan_warned++;
-    for my $method (qw(header parameter)) {
-      for my $class (@{$self->{HANDLER}}) {
-	my $obj;
-	eval { $obj = $class->instance; };
-	if ($@) {
-	  $obj = $self->instance_of($class);
-	}
-	next unless $obj->can($method);
-	$obj->$method($self);
-      }
-    }
+    die "No execution plan!";
   }
 }
 
@@ -607,14 +594,14 @@ is that of a puzzle. An HTML (or XML or SGML or whatever) page is
 regarded as a sequence of static and dynamic parts, each of which has
 some influence on the final output. Typically, in today's Webpages,
 the dynamic parts are filled into table cells, i.e. contents between
-some C<E<lt>TDE<gt>E<lt>/TDE<gt>> tokens. But this is not necessarily
-so. The static parts in between typically are some HTML markup, but
-this also isn't forced by the model. The model simply expects a
-sequence of static and dynamic parts. Static and dynamic parts can
-appear in random order. In the extreme case of a picture you would
-only have one part, either static or dynamic. HeavyCGI could handle
-this, but I don't see a particular advantage of HeavyCGI over a
-simple single handler.
+some C<< <TD></TD> >> tokens. But this is not necessarily so. The
+static parts in between typically are some HTML markup, but this also
+isn't forced by the model. The model simply expects a sequence of
+static and dynamic parts. Static and dynamic parts can appear in
+random order. In the extreme case of a picture you would only have one
+part, either static or dynamic. HeavyCGI could handle this, but I
+don't see a particular advantage of HeavyCGI over a simple single
+handler.
 
 In addition to the task of generating the contents of the page, there
 is the other task of producing correct headers. Header composition is
@@ -649,7 +636,7 @@ classes, i.e. they have no identity of their own but can be used to do
 something useful by working on an object that is passed to them.
 Singletons have an @ISA relation to L<Class::Singleton> which can be
 found on CPAN. As such, the classes can only have a single instance
-which can be found by calling the C<CLASS-E<gt>instance> method. We'll
+which can be found by calling the C<< CLASS->instance >> method. We'll
 call these objects after the mod_perl convention I<handlers>.
 
 Every request maps to exactly one Apache::HeavyCGI object. The
@@ -671,7 +658,7 @@ L<Apache::HeavyCGI::ExePlan> module. All of the called methods will
 get the HeavyCGI request object passed as the second parameter.
 
 There are no fixed rules as to what has to happen within the C<header>
-and C<parameter> method. As a rule of thumb it isf recommended to
+and C<parameter> method. As a rule of thumb it is recommended to
 determine and set the object attributes LAST_MODIFIED and EXPIRES (see
 below) within the header() method. It is also recommended to inject
 the L<Apache::HeavyCGI::IfModified> module as the last header handler,
