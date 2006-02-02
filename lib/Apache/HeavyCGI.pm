@@ -4,35 +4,9 @@ use Apache::Constants qw(:common);
 use Apache::HeavyCGI::Date;
 use Apache::HeavyCGI::Exception;
 use strict;
-use vars qw(%FIELDS $VERSION $DEBUG);
+use vars qw($VERSION $DEBUG);
 
-$VERSION = sprintf "0.%02d%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
-
-use fields qw[
-
-CAN_GZIP
-CAN_PNG
-CAN_UTF8
-CGI
-CHARSET
-CONTENT
-DOCUMENT_ROOT
-DONE
-ERROR
-ERRORS_TO_BROWSER
-EXECUTION_PLAN
-EXPIRES
-HANDLER
-LAST_MODIFIED
-MYURL
-R
-REFERER
-SERVERROOT_URL
-SERVER_ADMIN
-TIME
-TODAY
-
-];
+$VERSION = "0.013301";
 
 sub can_gzip {
   my Apache::HeavyCGI $self = shift;
@@ -217,16 +191,9 @@ sub myurl {
 sub new {
   my($class,%opt) = @_;
   no strict "refs";
-  my $self = bless [\%{"$class\::FIELDS"}], $class;
+  my $self = bless {}, $class;
   while (my($k,$v) = each %opt) {
-    eval {$self->{$k} = $v;};
-    if ($@) {
-      if ($@ =~ /No such array field/i) {
-	warn "ignoring unknown key[$k]";
-      } else {
-	die $@;
-      }
-    }
+    $self->{$k} = $v;
   }
   $self;
 }
@@ -643,9 +610,16 @@ call these objects after the mod_perl convention I<handlers>.
 Every request maps to exactly one Apache::HeavyCGI object. The
 programmer uses the methods of this object by subclassing. The
 HeavyCGI constructor creates objects of the AVHV type (pseudo-hashes).
+
+*** Note: after 0.0133 this was changed to an ordinary hash. ***
+
 If the inheriting class needs its own constructor, this needs to be an
 AVHV compatible constructor. A description of AVHV can be found in
-L<fields>. An Apache::HeavyCGI object usually is constructed with the
+L<fields>.
+
+*** Note: after 0.0133 this was changed to be an ordinary hash. ***
+
+An Apache::HeavyCGI object usually is constructed with the
 C<new> method and after that the programmer calls the C<dispatch>
 method on this object. HeavyCGI will then perform various
 initializations and then ask all nominated handlers in turn to perform
@@ -923,6 +897,8 @@ you change your main class. I believe, this could be fixed in
 fields.pm, but I haven't tried. A workaround is to avoid changing the
 main class, e.g. by delegating the layout() method to a different
 class.
+
+*** Note: this has no meaning anymore after 0.0133 ***
 
 =head1 AUTHOR
 

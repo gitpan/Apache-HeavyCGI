@@ -1,3 +1,11 @@
+2006-02-01  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* Funeral, kind of. I'll continue to use Apache::HeavyCGI in
+	legacy projects but will move away from it on the next occasion.
+
+	The README is not a manpage anymore but an eulogy (as leo
+	translates "Grabrede").
+
 2001-03-22  Andreas J. Koenig  <andreas.koenig@anima.de>
 
 	* Execution plan is now mandatory. A call to prepare will die if

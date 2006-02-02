@@ -1,6 +1,7 @@
 package Apache::HeavyCGI::Debug;
 use base 'Class::Singleton';
 use Data::Dumper;
+use strict;
 
 sub as_string {
   my Apache::HeavyCGI::Debug $self = shift;

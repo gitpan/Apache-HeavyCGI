@@ -1,9 +1,9 @@
 package Apache::HeavyCGI::ExePlan;
 use Apache::HeavyCGI; # want only the instance_of method
 use strict;
-use fields qw(PLAN DEBUG FUNCTIONAL WATCHVARIABLE);
+# use fields qw(PLAN DEBUG FUNCTIONAL WATCHVARIABLE);
 
-use vars '%FIELDS', '$VERSION';
+use vars '$VERSION';
 $VERSION = sprintf "%d.%03d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 
 # no singleton, every Application can have its own execution plan even
@@ -33,7 +33,7 @@ sub new {
     }
   }
   no strict "refs";
-  my $self = bless [\%{"$me\::FIELDS"}], $me;
+  my $self = bless {}, $me;
   $self->{PLAN} = [ @plan ];
   $self->{DEBUG} = $debug;
   $self->{FUNCTIONAL} = $functional;

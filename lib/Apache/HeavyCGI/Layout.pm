@@ -2,21 +2,21 @@ package Apache::HeavyCGI::Layout;
 use 5.005;
 
 use strict;
-use vars qw(%FIELDS $VERSION);
+use vars qw($VERSION);
 
-use fields qw[
+#use fields qw[
 
-CONTENT
-PREJOINED
+### CONTENT
+### PREJOINED
 
-];
+#];
 
 $VERSION = sprintf "%d.%03d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 sub new {
   my($class,@arr) = @_;
   no strict "refs";
-  my $self = bless [\%{"$class\::FIELDS"}], $class;
+  my $self = bless {}, $class;
   $self->{CONTENT} = [@arr];
   $self;
 }
