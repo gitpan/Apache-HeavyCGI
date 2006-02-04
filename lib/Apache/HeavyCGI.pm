@@ -6,7 +6,7 @@ use Apache::HeavyCGI::Exception;
 use strict;
 use vars qw($VERSION $DEBUG);
 
-$VERSION = "0.013301";
+$VERSION = "0.013302";
 
 sub can_gzip {
   my Apache::HeavyCGI $self = shift;
@@ -484,21 +484,18 @@ Apache::HeavyCGI - Framework to run complex CGI tasks on an Apache server
 
 =head1 SYNOPSIS
 
- use Apache::HeavyCGI; # see eg/ directory of the distribution
-                       # for a complete example/template
+ use Apache::HeavyCGI;
 
 =head1 WARNING UNSUPPORTED ALPHA CODE RELEASED FOR DEMO ONLY
 
-The release of this software is only for evaluation purposes to people
-who are actively writing code that deals with Web Application
+The release of this software was only for evaluation purposes to
+people who are actively writing code that deals with Web Application
 Frameworks. This package is probably just another Web Application
 Framework and may be worth using or may not be worth using. As of this
 writing (July 1999) it is by no means clear if this software will be
 developed further in the future. The author has written it over many
-years and is deploying it in several places, e.g.
-http://www.stadtplandienst.de, http://netlexikon.akademie.de and
-really soon on http://pause.perl.org too. It has turned out to be
-useful for him. YMMV.
+years and is deploying it in several places. B<Update 2006-02-03:
+Development stalled since 2001 and now discontinued.>
 
 There is no official support for this software. If you find it useful
 or even if you find it useless, please mail the author directly.

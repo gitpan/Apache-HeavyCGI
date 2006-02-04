@@ -1,7 +1,7 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         Apache-HeavyCGI
-version:      0.013301
+version:      0.013302
 version_from: lib/Apache/HeavyCGI.pm
 installdirs:  site
 requires:

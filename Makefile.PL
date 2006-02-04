@@ -35,7 +35,6 @@ the-release-name :
 
 release ::
 	/usr/bin/perl -I../../CPAN/SVN/release-lib -S release $(DISTVNAME).tar$(SUFFIX)
-	$(CP) $(DISTVNAME)/SIGNATURE ./SIGNATURE
 	$(CP) $(DISTVNAME)/META.yml  ./META.yml
 	rm -rf $(DISTVNAME)
 	svn cp -m 'This is $(VERSION)' https://franz.ak.mind.de/public-svn/Apache-HeavyCGI/trunk https://franz.ak.mind.de/public-svn/Apache-HeavyCGI/tags/$(VERSION)
